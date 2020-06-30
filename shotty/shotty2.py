@@ -1,11 +1,21 @@
 import boto3
-#import click
+import click
 session2=boto3.Session(profile_name='shotty2')
 ec2=session2.resource('ec2')
-#@click.command()
-def list_instances():
-    for i in ec2.instances.all():
-        print(i.id,' ',i.instance_type,' ',i.state['Name'],' ',i.public_dns_name,' ',i.placement['AvailabilityZone'])
+#@group.instances()
+@click.command()
+@click.option('--project',default=None,help="Only instances for project(tag Project:<name>)")
+def list_instances(project):
+    "List all instances"
+    if project:
+        filters=[{'Name':'tag:project','Values':['snapanalyzer']}]
+        instances=ec2.instances.filter(Filters=filters)
+    else:
+        instances=ec2.instances.all()
+
+    for i in instances:
+        tags={t['Key']:t['Value'] for t in i.tags or []}
+        print(i.id,' ',i.instance_type,' ',i.state['Name'],' ',i.public_dns_name,' ',i.placement['AvailabilityZone'],' ',tags.get('project','<no project>'))
 
     return
 
