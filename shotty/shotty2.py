@@ -25,6 +25,7 @@ def list_snapshot(project,list_all):
     for i in instances:
         tags={t['Key']:t['Value'] for t in i.tags or []}
         for v in i.volumes.all():
+
             for s in v.snapshots.all():
 
                 print(s.id,' ',v.id,' ',i.id,' ',s.state,' ',s.progress,' ',s.start_time.strftime("%c"),' ',tags.get('project','<no project>'))
@@ -49,7 +50,9 @@ def list_volumes(project):
             print(v.id,' ',i.id,' ',v.state,' ',i.public_dns_name,' ',str(v.size),' ',"GiB ",v.encrypted and "Encrypted" or "Not Encrypted",' ',tags.get('project','<no project>'))
 
 
-
+def snap_running(volume):
+    sn=list(volume.snapshots.all())
+    return sn and sn[0].state=='pending'
 
 
 
@@ -72,9 +75,12 @@ def create_snapshot(project):
         i.wait_until_stopped()
         tags={t['Key']:t['Value'] for t in i.tags or []}
         for v in i.volumes.all():
+            if snap_running(v):
+                print("Snapshot in progress for ",v.id)
+                continue
+
             print("Snapshotting for {0}".format(v.id))
             v.create_snapshot(Description="ss for snapanalyzer30000")
-
         i.start()
         print("Starting for {0}".format(i.id))
         i.wait_until_running()
