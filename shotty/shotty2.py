@@ -18,7 +18,8 @@ def snapshots():
     "comand for snapshots"
 @snapshots.command('list')
 @click.option('--project',default=None,help="Only snapshots for project(tag project:<name>)")
-def list_snapshot(project):
+@click.option('--all','list_all',default=False,is_flag=True,help="List all the snapshots")
+def list_snapshot(project,list_all):
     "List all snapshots"
     instances=filter_inst(project)
     for i in instances:
@@ -27,7 +28,7 @@ def list_snapshot(project):
             for s in v.snapshots.all():
 
                 print(s.id,' ',v.id,' ',i.id,' ',s.state,' ',s.progress,' ',s.start_time.strftime("%c"),' ',tags.get('project','<no project>'))
-
+                if s.state=='completed' and not list_all:break
 
     return
 
@@ -78,7 +79,7 @@ def create_snapshot(project):
         print("Starting for {0}".format(i.id))
         i.wait_until_running()
     print("Jobs done")
-    return    
+    return
 
 
 @instances.command('list')
